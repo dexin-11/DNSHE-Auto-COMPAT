@@ -25,9 +25,29 @@ jobs:
 
       - name: Run renew script
         env:
-          # 以下变量需在仓库 Settings -> Secrets -> Actions 中配置 
-          DNSHE_API_KEY: ${{ secrets.DNSHE_API_KEY }}
-          DNSHE_API_SECRET: ${{ secrets.DNSHE_API_SECRET }}
+          # 以下变量需在仓库 Settings -> Secrets -> Actions 中配置
+          # DNSHE 多账号密钥（支持多个账号，编号从 1 开始，最多 10 个）：
+          DNSHE_API_KEY_1: ${{ secrets.DNSHE_API_KEY_1 }}
+          DNSHE_API_SECRET_1: ${{ secrets.DNSHE_API_SECRET_1 }}
+          DNSHE_API_KEY_2: ${{ secrets.DNSHE_API_KEY_2 }}
+          DNSHE_API_SECRET_2: ${{ secrets.DNSHE_API_SECRET_2 }}
+          DNSHE_API_KEY_3: ${{ secrets.DNSHE_API_KEY_3 }}
+          DNSHE_API_SECRET_3: ${{ secrets.DNSHE_API_SECRET_3 }}
+          DNSHE_API_KEY_4: ${{ secrets.DNSHE_API_KEY_4 }}
+          DNSHE_API_SECRET_4: ${{ secrets.DNSHE_API_SECRET_4 }}
+          DNSHE_API_KEY_5: ${{ secrets.DNSHE_API_KEY_5 }}
+          DNSHE_API_SECRET_5: ${{ secrets.DNSHE_API_SECRET_5 }}
+          DNSHE_API_KEY_6: ${{ secrets.DNSHE_API_KEY_6 }}
+          DNSHE_API_SECRET_6: ${{ secrets.DNSHE_API_SECRET_6 }}
+          DNSHE_API_KEY_7: ${{ secrets.DNSHE_API_KEY_7 }}
+          DNSHE_API_SECRET_7: ${{ secrets.DNSHE_API_SECRET_7 }}
+          DNSHE_API_KEY_8: ${{ secrets.DNSHE_API_KEY_8 }}
+          DNSHE_API_SECRET_8: ${{ secrets.DNSHE_API_SECRET_8 }}
+          DNSHE_API_KEY_9: ${{ secrets.DNSHE_API_KEY_9 }}
+          DNSHE_API_SECRET_9: ${{ secrets.DNSHE_API_SECRET_9 }}
+          DNSHE_API_KEY_10: ${{ secrets.DNSHE_API_KEY_10 }}
+          DNSHE_API_SECRET_10: ${{ secrets.DNSHE_API_SECRET_10 }}
+          # SMTP 邮件通知（保持原有不变）：
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
