@@ -1,8 +1,9 @@
-# DNSHE 域名自动续期助手
+# 域名自动续期助手
 
-本项目是一个基于 GitHub Actions 的自动化脚本，旨在利用 **DNSHE 免费域名 API** 实现子域名的自动续期，并通过 **SMTP 邮件** 推送执行结果，确保您的免费域名永不过期。
+本项目是一组基于 GitHub Actions 的自动化脚本，分别利用 **DNSHE** 与 **DigitalPlat** 免费域名 API 实现域名的自动续期，并通过 **SMTP 邮件** 推送执行结果，确保您的免费域名永不过期。
 
-**支持多账号**：可同时配置最多 10 个 DNSHE 账号，脚本依次处理每个账号下的所有域名，最终汇总为一封邮件报告。
+- **DNSHE**：支持多账号，可同时配置最多 10 个 DNSHE 账号，脚本依次处理每个账号下的所有域名，最终汇总为一封邮件报告。
+- **DigitalPlat**：单账号模式，自动列出账号下所有域名并按剩余天数智能续期，结果通过邮件推送。
 
 ## 🌟 功能特性
 
@@ -116,7 +117,72 @@
 
 ***
 
-## 📅 运行计划
+## 🌐 DigitalPlat 域名自动续期
+
+本项目也提供基于 **DigitalPlat 免费域名 API** 的自动续期脚本（`renew_digitalplat.py`），逻辑与 DNSHE 脚本一致：自动列出账号下所有域名，仅对剩余天数不足 180 天的域名执行续期，并通过 SMTP 邮件推送执行报告。
+
+**单账号模式**：配置一个 `DIGITALPLAT_API_KEY` 即可。
+
+### 功能特性
+
+- **全自动续期**：每月 1 日自动执行续期操作。
+
+- **智能续期**：先检查域名到期时间，仅对剩余天数不足 180 天的域名执行续期。
+
+- **订阅制域名跳过**：识别 `lifecycle_type` 为 `subscription`（订阅制，由订阅自动续期）的域名，自动跳过手动续费。
+
+- **即时通知**：通过 SMTP 邮件推送详细报告，续期结果与所有域名到期时间分两段展示。
+
+- **安全合规**：采用 GitHub Secrets 管理密钥，不在代码中硬编码敏感信息。
+
+### 第一步：获取 API 密钥
+
+1. 登录 [DigitalPlat 控制台](https://dashboard.digitalplat.org/)。
+
+2. 进入 **Account & security** 页面，创建一个 API Key（按需选择 `domains:read` / `domains:write` 等权限）。
+
+3. 妥善保存形如 `dp_live_xxxxxxxxxxxxxxxxx` 的 API Key。
+
+### 第二步：准备 SMTP 邮箱
+
+与 DNSHE 脚本共用同一套 SMTP 配置，参考上文 [第二步：准备 SMTP 邮箱](#第二步准备-smtp-邮箱)。
+
+### 第三步：配置 GitHub 仓库
+
+进入仓库设置：**Settings** -> **Secrets and variables** -> **Actions**，点击 **New repository secret** 依次添加以下变量。
+
+#### DigitalPlat API 密钥
+
+| 变量名称 | 说明 | 示例 |
+| -------- | ---- | ---- |
+| `DIGITALPLAT_API_KEY` | DigitalPlat 账号的 API Key（必填） | `dp_live_xxxxxxxxxxxxxxxxx` |
+| `DIGITALPLAT_PAYMENT_METHOD` | 续费支付方式（可选，默认 `sandbox`；免费域名请按实际环境调整） | `sandbox` |
+| `DIGITALPLAT_RENEW_YEARS` | 续费年数（可选，默认 `1`） | `1` |
+| `DIGITALPLAT_RENEW_THRESHOLD_DAYS` | 续期阈值天数（可选，默认 `180`） | `180` |
+
+> **注意**：`DIGITALPLAT_PAYMENT_METHOD` 默认值为文档示例 `sandbox`，若您的免费域名实际支付方式不同，请务必在 Secrets 中配置正确的值，否则续费请求可能被拒绝。
+
+#### SMTP 邮件通知
+
+与 DNSHE 脚本共用，变量列表见上文 [SMTP 邮件通知](#smtp-邮件通知)（`SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_TO` 等）。
+
+### 第四步：启用自动化
+
+1. 点击仓库顶部的 **Actions** 选项卡。
+2. 在左侧选择 **"DigitalPlat Domain Auto Renew"** 工作流。
+3. 点击 **Run workflow** 手动触发一次，验证配置是否正确。
+
+### 运行计划
+
+- **执行频率**：每月 1 日北京时间 08:00（与 DNSHE 工作流一致）。
+
+- **错误处理**：若获取域名列表失败（如 API Key 无效），报告中标注失败原因并发送通知邮件。
+
+- **未配置密钥**：若未检测到 `DIGITALPLAT_API_KEY`，脚本会输出提示并尝试发送通知邮件。
+
+***
+
+## 📅 运行计划（DNSHE）
 
 - **执行频率**：每月 1 日北京时间 08:00。
 

@@ -1,0 +1,44 @@
+name: DigitalPlat Domain Auto Renew
+
+on:
+  schedule:
+    # 表达式说明：分钟 小时 天 月 星期
+    # 0 0 1 * * 表示 UTC 时间每月 1 日 00:00
+    # 对应北京时间 (UTC+8) 为每月 1 日 08:00
+    - cron: '0 0 1 * *'
+  workflow_dispatch: # 依然保留手动触发按钮，方便测试
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run renew script
+        env:
+          # 以下变量需在仓库 Settings -> Secrets -> Actions 中配置
+          # DigitalPlat API 密钥（单账号）：
+          DIGITALPLAT_API_KEY: ${{ secrets.DIGITALPLAT_API_KEY }}
+          # 续期参数（可选，默认 sandbox / 1 年 / 180 天）：
+          DIGITALPLAT_PAYMENT_METHOD: ${{ secrets.DIGITALPLAT_PAYMENT_METHOD }}
+          DIGITALPLAT_RENEW_YEARS: ${{ secrets.DIGITALPLAT_RENEW_YEARS }}
+          DIGITALPLAT_RENEW_THRESHOLD_DAYS: ${{ secrets.DIGITALPLAT_RENEW_THRESHOLD_DAYS }}
+          # SMTP 邮件通知（与 DNSHE 工作流共用同一套配置）：
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          SMTP_TO: ${{ secrets.SMTP_TO }}
+          SMTP_USE_SSL: ${{ secrets.SMTP_USE_SSL }}
+          SMTP_USE_STARTTLS: ${{ secrets.SMTP_USE_STARTTLS }}
+        run: python renew_digitalplat.py
