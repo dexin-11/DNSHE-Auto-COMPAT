@@ -5,6 +5,7 @@ import ssl
 from datetime import datetime
 from email.message import EmailMessage
 from urllib.parse import quote
+from uuid import uuid4
 
 # ============================================================
 # DIGITALPLAT 域名自动续期脚本（结构仿照 DNSHE 自动续期脚本）
@@ -113,10 +114,10 @@ def _extract_error(data):
 
 
 def _parse_expiry(expiry_str):
-    """解析到期时间，兼容 %Y-%m-%d（文档格式）与 %Y-%m-%d %H:%M:%S"""
-    for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
+    """解析到期时间，兼容文档（%Y-%m-%d）与实际接口（%Y%m%d，如 20270921）等多种格式"""
+    for fmt in ('%Y-%m-%d', '%Y%m%d', '%Y-%m-%d %H:%M:%S'):
         try:
-            return datetime.strptime(expiry_str, fmt)
+            return datetime.strptime(str(expiry_str).strip(), fmt)
         except ValueError:
             continue
     return None
@@ -150,11 +151,12 @@ def _process_domains(api_key, today, message_parts):
 
     # 2. 遍历域名，检查到期时间并选择性续期（智能续期/订阅制域名跳过/到期计算逻辑与 DNSHE 一致）
     for domain in domains:
-        name = domain.get('name')
+        # 实际接口字段为 domain/expires_at，文档字段为 name/expiry_date，两者兼容
+        name = domain.get('domain') or domain.get('name')
         if not name:
             continue
         lifecycle_type = domain.get('lifecycle_type')
-        expiry_str = domain.get('expiry_date')
+        expiry_str = domain.get('expires_at') or domain.get('expiry_date')
 
         # 跳过订阅制域名（由订阅自动续期，无需手动续费，类似 DNSHE 的永不过期域名）
         if lifecycle_type == 'subscription':
@@ -177,12 +179,14 @@ def _process_domains(api_key, today, message_parts):
             renewal_results.append(f"⏭️ {name}: 剩余 {days_remaining}天 >= {RENEW_THRESHOLD_DAYS}天，跳过续期")
             continue
 
-        # 执行续期
+        # 执行续期（续费接口要求 Idempotency-Key 请求头，文档未提及，缺失会报 idempotency_key_required）
         renew_url = f"{API_BASE}/domains/{quote(name, safe='')}/renew"
         payload = {"years": RENEW_YEARS, "payment_method": PAYMENT_METHOD}
+        renew_headers = dict(headers)
+        renew_headers["Idempotency-Key"] = str(uuid4())
 
         try:
-            r_resp = requests.post(renew_url, headers=headers, json=payload).json()
+            r_resp = requests.post(renew_url, headers=renew_headers, json=payload).json()
             if r_resp.get('success'):
                 r_data = r_resp.get('data') or {}
                 registry_status = r_data.get('registry_status', '未知')
